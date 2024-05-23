@@ -12,6 +12,7 @@ const {expect} = require("chai");
 const {
     loadFixture,
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
+const {ethers} = require("hardhat");
 
 // `describe` is a Mocha function that allows you to organize your tests.
 // Having your tests organized makes debugging them easier. All Mocha
@@ -96,6 +97,31 @@ describe("Token contract", function () {
             expect(await hardhatToken.balanceOf(owner.address)).to.equal(
                 initialOwnerBalance
             );
+        });
+
+        it("Test transaction assemble", async function () {
+            const {hardhatToken, owner, addr1} = await deployTokenFixture();
+
+            const method = hardhatToken.interface.getFunction("transfer");
+            const callData = hardhatToken.interface.encodeFunctionData(method, [owner.address, 1]);
+            const tx = await owner.sendTransaction({to: hardhatToken,
+                data: callData,
+                // gasPrice: 77015174000,
+                gasLimit: 1000888});
+            // const tx = await ethers.provider.getTransaction(tx.hash);
+            expect(tx.gasLimit).to.equal(1000888n);
+            // expect(tx.gasPrice).to.equal(77015174000n);
+
+            const tx2 = await owner.sendTransaction({to: hardhatToken,
+                data: callData,
+                maxPriorityFeePerGas: 770151733000n,
+                maxFeePerGas: 1000000000000n,
+                // value: 188n,
+                gasLimit: 1000866n});
+            expect(tx2.gasLimit).to.equal(1000866n);
+            expect(tx2.maxPriorityFeePerGas).to.equal(770151733000n);
+            expect(tx2.maxFeePerGas).to.equal(1000000000000n);
+            // expect(tx2.value).to.equal(188n);
         });
     });
 });
